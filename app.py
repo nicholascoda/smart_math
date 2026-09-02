@@ -28,7 +28,7 @@ st.sidebar.markdown("**Regras de Treinamento (Dataset):**")
 st.sidebar.markdown("- (0,0) -> 0 (Casual)")
 st.sidebar.markdown("- (1,1) -> 0 (Fanático)")
 st.sidebar.markdown("- (1,0) -> 1 (Cambista)")
-st.sidebar.markdown("- (0,1) -> 1 (Invasor)")
+st.sidebar.markdown("- (0,1) -> 1 (Compra de Cambista)")
 
 # Hiperparâmetros
 lr = st.sidebar.slider("Taxa de Aprendizado (Learning Rate):", 0.01, 2.0, 0.8, step=0.05)
