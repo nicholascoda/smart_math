@@ -21,7 +21,7 @@ dataset = [
     (1, 1, 0), # Fanático: Compra muito, vai muito (Liberado)
     (1, 0, 1), # Cambista: Compra muito, não vai (Fraude!)
     (0, 1, 1)  # Invasor: Não compra, mas acessa (Fraude!)
-    (0.5, 0.5, 0)    # NOVO: Torcedor Comum: Compra médio, vai médio (Liberado)
+    (0,5, 0,5, 0)    # NOVO: Torcedor Comum: Compra médio, vai médio (Liberado)
 ]
 
 st.sidebar.markdown("**Regras de Treinamento (Dataset):**")
