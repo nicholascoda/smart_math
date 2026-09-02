@@ -4,41 +4,34 @@ import random
 import matplotlib.pyplot as plt
 
 # Configuração da página
-st.set_page_config(page_title="Rede Neural do Zero - MLP", layout="wide")
+st.set_page_config(page_title="IA Anti-Fraude de Ingressos", layout="wide")
 
-st.title("🧠 Demonstração Prática: Rede Neural Multicamadas (MLP) do Zero")
+st.title("🏟️ Sistema Anti-Cambista: Rede Neural Multicamadas (MLP)")
 st.markdown("""
-Esta aplicação treina uma **Rede Neural Artificial do zero**, sem o uso de frameworks de IA.
-Toda a matemática (*Forward Pass*, Cálculo de Erro Quadrático e *Backpropagation*) é executada via código Python puro.
+Esta aplicação treina uma **Rede Neural Artificial do zero** para identificar fraudes e cambistas em programas de Sócio-Torcedor.
+Toda a matemática (*Forward Pass*, Cálculo de Erro e *Backpropagation*) é rodada pura, sem frameworks de IA.
 """)
 
 st.sidebar.header("⚙️ Parâmetros da Rede")
 
-# Seleção do Problema / Tabela Verdade
-problema = st.sidebar.selectbox(
-    "Escolha o problema lógico:",
-    ["XOR (OU Exclusivo)", "XNOR", "AND", "OR", "Personalizado"]
-)
+# O Dataset agora tem significado real (É a lógica do XOR)
+# (Volume de Compra, Frequencia na Catraca, Alerta de Fraude)
+dataset = [
+    (0, 0, 0), # Casual: Compra pouco, vai pouco (Liberado)
+    (1, 1, 0), # Fanático: Compra muito, vai muito (Liberado)
+    (1, 0, 1), # Cambista: Compra muito, não vai (Fraude!)
+    (0, 1, 1)  # Invasor: Não compra, mas acessa (Fraude!)
+]
 
-if problema == "XOR (OU Exclusivo)":
-    dataset = [(0, 0, 0), (0, 1, 1), (1, 0, 1), (1, 1, 0)]
-elif problema == "XNOR":
-    dataset = [(0, 0, 1), (0, 1, 0), (1, 0, 0), (1, 1, 1)]
-elif problema == "AND":
-    dataset = [(0, 0, 0), (0, 1, 0), (1, 0, 0), (1, 1, 1)]
-elif problema == "OR":
-    dataset = [(0, 0, 0), (0, 1, 1), (1, 0, 1), (1, 1, 1)]
-else:
-    st.sidebar.subheader("Tabela Verdade Personalizada")
-    t00 = st.sidebar.number_input("Saída para (0,0)", 0, 1, 0)
-    t01 = st.sidebar.number_input("Saída para (0,1)", 0, 1, 1)
-    t10 = st.sidebar.number_input("Saída para (1,0)", 0, 1, 1)
-    t11 = st.sidebar.number_input("Saída para (1,1)", 0, 1, 0)
-    dataset = [(0, 0, t00), (0, 1, t01), (1, 0, t10), (1, 1, t11)]
+st.sidebar.markdown("**Regras de Treinamento (Dataset):**")
+st.sidebar.markdown("- (0,0) -> 0 (Casual)")
+st.sidebar.markdown("- (1,1) -> 0 (Fanático)")
+st.sidebar.markdown("- (1,0) -> 1 (Cambista)")
+st.sidebar.markdown("- (0,1) -> 1 (Invasor)")
 
 # Hiperparâmetros
 lr = st.sidebar.slider("Taxa de Aprendizado (Learning Rate):", 0.01, 2.0, 0.8, step=0.05)
-epochs = st.sidebar.slider("Número de Épocas:", 1000, 30000, 10000, step=1000)
+epochs = st.sidebar.slider("Número de Épocas:", 1000, 30000, 15000, step=1000)
 seed = st.sidebar.number_input("Semente Aleatória (Seed):", value=1, step=1)
 
 # Função de ativação Sigmoide
@@ -46,21 +39,13 @@ def sigmoid(z):
     return 1 / (1 + math.exp(-z))
 
 # Botão de Treinamento
-if st.button("🚀 Treinar Rede Neural"):
+if st.button("🚀 Treinar Rede Anti-Fraude"):
     random.seed(seed)
     
-    # Inicialização dos Pesos e Viases
-    w11 = random.uniform(-1, 1)
-    w12 = random.uniform(-1, 1)
-    b1 = 0.0
-
-    w21 = random.uniform(-1, 1)
-    w22 = random.uniform(-1, 1)
-    b2 = 0.0
-
-    v1 = random.uniform(-1, 1)
-    v2 = random.uniform(-1, 1)
-    c = 0.0
+    # Pesos Iniciais
+    w11, w12, b1 = random.uniform(-1, 1), random.uniform(-1, 1), 0.0
+    w21, w22, b2 = random.uniform(-1, 1), random.uniform(-1, 1), 0.0
+    v1, v2, c = random.uniform(-1, 1), random.uniform(-1, 1), 0.0
 
     def forward(x1, x2):
         h1 = sigmoid(w11 * x1 + w12 * x2 + b1)
@@ -69,32 +54,24 @@ if st.button("🚀 Treinar Rede Neural"):
         return h1, h2, o
 
     def calcular_mse():
-        total = 0.0
-        for x1, x2, t in dataset:
-            _, _, o = forward(x1, x2)
-            total += (t - o) ** 2
+        total = sum((t - forward(x1, x2)[2]) ** 2 for x1, x2, t in dataset)
         return total / len(dataset)
 
-    # Historico para gráficos
     historico_epocas = []
     historico_perda = []
 
-    # Loop de Treinamento
+    # Backpropagation puro
+    progress_bar = st.progress(0)
     for epoch in range(epochs):
         for x1, x2, t in dataset:
-            # Forward
             h1, h2, o = forward(x1, x2)
-            
-            # Backpropagation (Gradiente Descendente)
             erro = t - o
             d_o = erro * o * (1 - o)
             
-            # Atualiza camada de saída
             v1 += lr * d_o * h1
             v2 += lr * d_o * h2
             c += lr * d_o
             
-            # Atualiza camada oculta
             d_h1 = d_o * v1 * h1 * (1 - h1)
             w11 += lr * d_h1 * x1
             w12 += lr * d_h1 * x2
@@ -108,59 +85,43 @@ if st.button("🚀 Treinar Rede Neural"):
         if epoch % (epochs // 50) == 0 or epoch == epochs - 1:
             historico_epocas.append(epoch)
             historico_perda.append(calcular_mse())
+            progress_bar.progress((epoch + 1) / epochs)
 
-    # Salva o estado treinado na sessão do Streamlit
     st.session_state['treinado'] = True
     st.session_state['modelo'] = (w11, w12, b1, w21, w22, b2, v1, v2, c)
     st.session_state['historico'] = (historico_epocas, historico_perda)
-    st.session_state['dataset'] = dataset
 
-# Exibição dos Resultados após Treinamento
+# Exibição
 if st.session_state.get('treinado', False):
     w11, w12, b1, w21, w22, b2, v1, v2, c = st.session_state['modelo']
     historico_epocas, historico_perda = st.session_state['historico']
-    dataset = st.session_state['dataset']
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("📊 Curva de Aprendizado (Erro MSE vs Épocas)")
+        st.subheader("📊 Gráfico de Aprendizado (Queda de Erro)")
         fig, ax = plt.subplots()
-        ax.plot(historico_epocas, historico_perda, color="#1f77b4", linewidth=2)
-        ax.set_xlabel("Épocas")
-        ax.set_ylabel("Erro Quadrático Médio (MSE)")
+        ax.plot(historico_epocas, historico_perda, color="#d62728", linewidth=2)
+        ax.set_xlabel("Épocas de Treino")
+        ax.set_ylabel("Erro (MSE)")
         ax.grid(True, linestyle="--", alpha=0.6)
         st.pyplot(fig)
 
     with col2:
-        st.subheader("🎯 Tabela de Resultados do Treinamento")
-        resultados = []
-        for x1, x2, t in dataset:
-            h1 = sigmoid(w11 * x1 + w12 * x2 + b1)
-            h2 = sigmoid(w21 * x1 + w22 * x2 + b2)
-            o = sigmoid(v1 * h1 + v2 * h2 + c)
-            resultados.append({
-                "Entrada (x1, x2)": f"({x1}, {x2})",
-                "Esperado (Target)": t,
-                "Saída Obtida": f"{o:.4f}",
-                "Classe Prevista": 1 if o >= 0.5 else 0
-            })
-        st.table(resultados)
-
-    st.markdown("---")
-    st.subheader("🧪 Teste Interativo ao Vivo")
-    st.write("Mova os sliders abaixo para simular entradas arbitrárias no modelo treinado:")
-    
-    col_t1, col_t2, col_t3 = st.columns(3)
-    with col_t1:
-        input_x1 = st.slider("Entrada x1:", 0.0, 1.0, 0.0, step=0.1)
-    with col_t2:
-        input_x2 = st.slider("Entrada x2:", 0.0, 1.0, 1.0, step=0.1)
-    
-    with col_t3:
+        st.subheader("🎯 Teste do Perfil do Usuário")
+        st.write("Ajuste o comportamento do cliente:")
+        
+        # Teste ao vivo
+        input_x1 = st.slider("Volume de Compras no Site (0=Pouco, 1=Muito):", 0.0, 1.0, 0.5, step=0.05)
+        input_x2 = st.slider("Presença na Catraca (0=Não vai, 1=Sempre vai):", 0.0, 1.0, 0.5, step=0.05)
+        
         h1 = sigmoid(w11 * input_x1 + w12 * input_x2 + b1)
         h2 = sigmoid(w21 * input_x1 + w22 * input_x2 + b2)
         pred_o = sigmoid(v1 * h1 + v2 * h2 + c)
         
-        st.metric(label="Saída Contínua do Neurônio", value=f"{pred_o:.4f}")
-        st.metric(label="Decisão Final (Limiar 0.5)", value=1 if pred_o >= 0.5 else 0)
+        st.metric(label="Risco de Fraude (0.0 a 1.0)", value=f"{pred_o:.4f}")
+        
+        if pred_o >= 0.5:
+            st.error("🚨 CONTA BLOQUEADA - ALTO RISCO DE FRAUDE/CAMBISMO")
+        else:
+            st.success("✅ ACESSO LIBERADO - TORCEDOR GENUÍNO")
